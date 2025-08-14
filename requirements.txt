@@ -1,0 +1,7 @@
+pdfplumber
+python-docx
+pandas
+spacy
+skill-ner
+sentence-transformers
+faiss

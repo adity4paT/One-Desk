@@ -1,7 +1,35 @@
+# Backend framework
+fastapi
+uvicorn[standard]
+
+# Document parsing
 pdfplumber
 python-docx
-pandas
-spacy
-skill-ner
+PyMuPDF  # Alternative PDF parsing, faster for some cases
+
+# NLP & Embeddings
 sentence-transformers
-faiss
+faiss-cpu
+numpy
+scikit-learn
+
+# Google Gemini API
+google-generativeai
+
+# RAG / Text processing helpers
+langchain
+langchain-community
+langchain-google-genai
+
+# Data handling
+pandas
+
+# CORS for frontend-backend communication
+fastapi-cors  # or use starlette.middleware.cors
+
+# Utility libraries
+tqdm        # Progress bars for debugging
+python-dotenv # Load .env for API keys
+
+# Optional: For async requests (if needed)
+httpx

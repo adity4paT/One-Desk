@@ -13,15 +13,30 @@ class Settings(BaseSettings):
     port: int = Field(default=8000, description="Server port")
     debug: bool = Field(default=False, description="Debug mode")
     
+    
+    # LLM Model Settings
+    deepseek_model: str = Field(default="deepseek-chat", description="DeepSeek model name")
+    llm_temperature: float = Field(default=0.2, description="LLM temperature for consistency")
+    max_tokens: int = Field(default=1000, description="Maximum tokens in LLM response")
+    
+    # RAG Configuration - ADD THIS SECTION
+    top_k_retrieval: int = Field(default=5, description="Number of chunks to retrieve")
+    max_context_length: int = Field(default=4000, description="Max characters in context")
+    include_sources: bool = Field(default=True, description="Include source citations in answers")
+    
+    # Caching Configuration - ADD THIS SECTION
+    enable_caching: bool = Field(default=True, description="Enable response caching")
+    cache_ttl_seconds: int = Field(default=600, description="Cache TTL in seconds")
+    embedding_cache_ttl: int = Field(default=86400, description="Embedding cache TTL (24h)")
+
     # OpenAI Configuration
-    openai_api_key: str = Field(default="", description="OpenAI API key")
     embedding_model: str = Field(
         default="sentence-transformers/all-MiniLM-L6-v2", 
         description="Embedding model name"
     )
     
     # Storage Paths
-    hr_policies_path: str = Field(default="./data/hr_policies", description="HR policies directory")
+    hr_policies_path: str = Field(default="./data/HR policies", description="HR policies directory")
     indices_path: str = Field(default="./data/indices", description="FAISS indices directory")
     
     # FAISS Configuration

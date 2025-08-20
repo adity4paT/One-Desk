@@ -2,28 +2,19 @@ from typing import List, Dict, Any, Optional
 from abc import ABC, abstractmethod
 import httpx
 from app.config import settings
-import os
-from pathlib import Path
-from dotenv import load_dotenv
 
-load_dotenv(dotenv_path=Path(".env")) 
+API_KEY = settings.gemini_api_key
+MODEL_NAME = settings.gemini_model
+BASE_URL = settings.gemini_base_url
 
-deepseek_api_key = os.getenv("deepseek_api_key", "")
-DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
 
-class LLMClient(ABC):
-    """Abstract base class for LLM providers"""
-    
-    @abstractmethod
-    async def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> str:
-        pass
 
-class DeepSeekClient(LLMClient):
+class LLM():
     """DeepSeek API client using OpenAI-compatible format"""
     
     def __init__(self, api_key: str):
         self.api_key = api_key
-        self.base_url = "https://api.deepseek.com"
+        self.base_url = BASE_URL
         
     async def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> str:
         headers = {
@@ -32,7 +23,7 @@ class DeepSeekClient(LLMClient):
         }
         
         payload = {
-            "model": DEEPSEEK_MODEL,
+            "model": MODEL_NAME,
             "messages": messages,
             "temperature": kwargs.get("temperature", settings.llm_temperature),
             "max_tokens": kwargs.get("max_tokens", settings.max_tokens),
@@ -50,6 +41,5 @@ class DeepSeekClient(LLMClient):
             return result["choices"][0]["message"]["content"]
 
 
-def get_llm_client() -> LLMClient:
-    return DeepSeekClient(deepseek_api_key)
-   
+def get_llm_client() :
+    return LLM(API_KEY)

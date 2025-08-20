@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, Optional
 import time
-from app.services.llm import DEEPSEEK_MODEL, get_llm_client
+from app.services.llm import MODEL_NAME, get_llm_client
 from app.services.cache import cache_manager
 from app.vectorstores.faiss_store import HR_INDEX
 from app.services.embeddings import embeddings
@@ -25,7 +25,7 @@ class RAGService:
             cache_key = cache_manager.generate_key("hrqa", {
                 "query": query,
                 "top_k": top_k,
-                "model": DEEPSEEK_MODEL
+                "model": MODEL_NAME
             })
 
             cached_response = cache_manager.get_response(cache_key)

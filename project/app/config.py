@@ -11,9 +11,9 @@ class Settings(BaseSettings):
     debug: bool = Field(default=False)
 
     # DeepSeek (do NOT hardcode real keys here; use .env)
-    deepseek_api_key: str = Field(default="")
-    deepseek_model: str = Field(default="deepseek-chat")
-    deepseek_base_url: str = Field(default="https://api.deepseek.com")
+    gemini_api_key: str = Field(default="")
+    gemini_model: str = Field(default="gemini-default")
+    gemini_base_url: str = Field(default="https://api.googleapis.com")  # change if different
 
     # Embeddings
     embedding_model: str = Field(default="sentence-transformers/all-MiniLM-L6-v2")

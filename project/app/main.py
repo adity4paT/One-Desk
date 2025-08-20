@@ -18,6 +18,3 @@ async def _startup():
     MEET_INDEX.load()
 
 
-@app.get("/")
-async def root():
-    return {"name": "One-Desk Backend API", "docs": "/docs"}

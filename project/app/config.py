@@ -1,105 +1,90 @@
-from pydantic_settings import BaseSettings
-from pydantic import Field
-from typing import List
-import os
 from pathlib import Path
+from typing import List
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Application settings with environment variable support"""
-    
-    # Server Configuration
-    host: str = Field(default="127.0.0.1", description="Server host")
-    port: int = Field(default=8000, description="Server port")
-    debug: bool = Field(default=False, description="Debug mode")
-    
-    
-    # LLM Model Settings
-    llm_temperature: float = Field(default=0.2, description="LLM temperature for consistency")
-    max_tokens: int = Field(default=1000, description="Maximum tokens in LLM response")
-    
-    # RAG Configuration - ADD THIS SECTION
-    top_k_retrieval: int = Field(default=5, description="Number of chunks to retrieve")
-    max_context_length: int = Field(default=4000, description="Max characters in context")
-    include_sources: bool = Field(default=True, description="Include source citations in answers")
-    
-    # Caching Configuration - ADD THIS SECTION
-    enable_caching: bool = Field(default=True, description="Enable response caching")
-    cache_ttl_seconds: int = Field(default=600, description="Cache TTL in seconds")
-    embedding_cache_ttl: int = Field(default=86400, description="Embedding cache TTL (24h)")
+    # Server
+    host: str = Field(default="127.0.0.1")
+    port: int = Field(default=8000)
+    debug: bool = Field(default=False)
 
-    # OpenAI Configuration
-    embedding_model: str = Field(
-        default="sentence-transformers/all-MiniLM-L6-v2", 
-        description="Embedding model name"
-    )
-    
-    # Storage Paths
-    hr_policies_path: str = Field(default="./data/HR policies", description="HR policies directory")
-    indices_path: str = Field(default="./data/indices", description="FAISS indices directory")
-    
-    # FAISS Configuration
-    faiss_index_name: str = Field(default="hr_faiss.index", description="FAISS index filename")
-    faiss_metadata_name: str = Field(default="hr_meta.json", description="FAISS metadata filename")
-    
-    # Chunking Configuration
-    chunk_size: int = Field(default=1000, description="Text chunk size")
-    chunk_overlap: int = Field(default=200, description="Chunk overlap size")
-    max_chunks_per_doc: int = Field(default=100, description="Maximum chunks per document")
-    
-    # Retrieval Configuration
-    top_k_results: int = Field(default=5, description="Number of top results to retrieve")
-    similarity_threshold: float = Field(default=0.7, description="Similarity threshold for retrieval")
+    # DeepSeek
+    deepseek_api_key: str = Field(default="sk-a23ee41ab1e14c07ad3d934a9fb27f5e")
+    deepseek_model: str = Field(default="deepseek-chat")
+    deepseek_base_url: str = Field(default="https://api.deepseek.com")
 
-    # Rate Limiting
-    rate_limit_per_minute: int = Field(default=60, description="Rate limit per minute")
-    enable_rate_limiting: bool = Field(default=False, description="Enable rate limiting")
-    
-    # File Upload Limits
-    max_file_size_mb: int = Field(default=25, description="Maximum file size in MB")
-    allowed_file_types: List[str] = Field(
-        default=[".pdf", ".txt"], 
-        description="Allowed file types"
+    # Embeddings
+    embedding_model: str = Field(default="sentence-transformers/all-MiniLM-L6-v2")
+
+    # Storage
+    hr_policies_path: str = Field(default="./data/HR Polices")
+    indices_path: str = Field(default="./data/indices")
+    cache_path: str = Field(default="./data/cache")
+
+    # FAISS
+    faiss_index_name: str = Field(default="hr_faiss.index")
+    faiss_metadata_name: str = Field(default="hr_meta.json")
+
+    # Chunking
+    chunk_size: int = Field(default=1000)
+    chunk_overlap: int = Field(default=200)
+
+    # Cache (used by cache.py)
+    cache_ttl_seconds: int = Field(default=3600)
+    enable_cache: bool = Field(default=True)
+
+    # Uploads
+    allowed_file_types: List[str] = Field(default=[".pdf", ".txt"])
+    max_file_size_mb: int = Field(default=10)
+
+    # Pydantic v2 settings config (do NOT also define inner Config)
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore",
     )
-    
-    # Computed Properties
+
     @property
     def hr_policies_dir(self) -> Path:
-        """Get HR policies directory as Path object"""
         return Path(self.hr_policies_path)
-    
+
     @property
     def indices_dir(self) -> Path:
-        """Get indices directory as Path object"""
         return Path(self.indices_path)
-    
+
+    @property
+    def cache_dir(self) -> Path:
+        return Path(self.cache_path)
+
     @property
     def faiss_index_path(self) -> str:
-        """Get full FAISS index file path"""
         return str(self.indices_dir / self.faiss_index_name)
-    
+
     @property
     def faiss_metadata_path(self) -> str:
-        """Get full FAISS metadata file path"""
         return str(self.indices_dir / self.faiss_metadata_name)
-    
-    def ensure_directories(self):
-        """Ensure all required directories exist"""
-        directories = [
-            self.hr_policies_dir,
-            self.indices_dir
-        ]
-        
-        for directory in directories:
-            directory.mkdir(parents=True, exist_ok=True)
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    @property
+    def embedding_cache_ttl(self) -> int:
+        return self.cache_ttl_seconds
+
+    @property
+    def response_cache_ttl(self) -> int:
+        return self.cache_ttl_seconds
+
+    @property
+    def enable_embedding_cache(self) -> bool:
+        return self.enable_cache
+
+    @property
+    def enable_response_cache(self) -> bool:
+        return self.enable_cache
+
+    def ensure_directories(self) -> None:
+        for d in (self.hr_policies_dir, self.indices_dir, self.cache_dir):
+            d.mkdir(parents=True, exist_ok=True)
 
 
-# Global settings instance
 settings = Settings()
-
-# Ensure directories exist on import
 settings.ensure_directories()

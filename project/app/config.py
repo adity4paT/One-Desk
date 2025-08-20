@@ -15,7 +15,6 @@ class Settings(BaseSettings):
     
     
     # LLM Model Settings
-    deepseek_model: str = Field(default="deepseek-chat", description="DeepSeek model name")
     llm_temperature: float = Field(default=0.2, description="LLM temperature for consistency")
     max_tokens: int = Field(default=1000, description="Maximum tokens in LLM response")
     

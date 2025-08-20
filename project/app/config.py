@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     cache_ttl_seconds: int = Field(default=3600)
     enable_cache: bool = Field(default=True)
 
+    # Retrieval / RAG defaults (compatibility & expected by rag.py)
+    top_k_retrieval: int = Field(default=5)
+    include_sources: bool = Field(default=True)
+    max_context_length: int = Field(default=20000)
+
     # Uploads
     allowed_file_types: List[str] = Field(default=[".pdf", ".txt"])
     max_file_size_mb: int = Field(default=10)

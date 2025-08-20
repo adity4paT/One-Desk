@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import hr, meetings
@@ -7,14 +6,6 @@ from app.vectorstores.faiss_store import HR_INDEX, MEET_INDEX
 
 
 app = FastAPI(title="One-Desk Backend API", version="1.0.0")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 app.include_router(hr.router)
 app.include_router(meetings.router)

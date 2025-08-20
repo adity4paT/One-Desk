@@ -14,13 +14,14 @@ class SummaryService:
         """Summarize meeting text using LLM"""
         start_time = time.time()
         
-        # Check cache first
-        if settings.enable_caching:
-            cache_key = cache_manager.generate_key("summary", {
-                "text_hash": hash(text),
-                "title": meeting_title
-            })
-            
+        # Always generate cache_key for consistent usage
+        cache_key = cache_manager.generate_key("summary", {
+            "text_hash": hash(text),
+            "title": meeting_title
+        })
+
+        # Check cache first (response cache)
+        if settings.enable_response_cache:
             cached_response = cache_manager.get_response(cache_key)
             if cached_response:
                 cached_response["cached"] = True
@@ -37,8 +38,8 @@ class SummaryService:
             "latency_ms": int((time.time() - start_time) * 1000)
         }
         
-        # Cache the response
-        if settings.enable_caching:
+        # Cache the response (response cache)
+        if settings.enable_response_cache:
             cache_manager.set_response(cache_key, response.copy())
         
         return response

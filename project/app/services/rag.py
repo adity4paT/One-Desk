@@ -18,15 +18,16 @@ class RAGService:
         
         # Use default or provided top_k
         top_k = top_k or settings.top_k_retrieval
-        
-        # Check cache first
-        if settings.enable_caching:
+
+        # Always define cache_key if response cache is enabled
+        cache_key = None
+        if settings.enable_response_cache:
             cache_key = cache_manager.generate_key("hrqa", {
                 "query": query,
                 "top_k": top_k,
                 "model": DEEPSEEK_MODEL
             })
-            
+
             cached_response = cache_manager.get_response(cache_key)
             if cached_response:
                 cached_response["cached"] = True
@@ -66,11 +67,11 @@ class RAGService:
             "cached": False,
             "latency_ms": int((time.time() - start_time) * 1000)
         }
-        
-        # Cache the response
-        if settings.enable_caching:
+        # Cache the response (response cache)
+        if settings.enable_response_cache and cache_key is not None:
             cache_manager.set_response(cache_key, response.copy())
         
+        return response
         return response
     
     async def _retrieve_contexts(self, query: str, top_k: int) -> List[Dict[str, Any]]:
@@ -78,8 +79,24 @@ class RAGService:
         # Ensure HR index is loaded
         HR_INDEX.load()
         
-        # Get query embedding
-        query_embedding = embeddings.embed_one(query)
+        # Get query embedding — use embedding cache if enabled
+        if settings.enable_embedding_cache:
+            emb_key = cache_manager.generate_key("embedding", {"text_hash": hash(query)})
+            try:
+                cached_emb = cache_manager.get_embedding(emb_key)
+            except Exception:
+                cached_emb = None
+
+            if cached_emb is not None:
+                query_embedding = cached_emb
+            else:
+                query_embedding = embeddings.embed_one(query)
+                try:
+                    cache_manager.set_embedding(emb_key, query_embedding)
+                except Exception:
+                    pass
+        else:
+            query_embedding = embeddings.embed_one(query)
         
         # Search for similar chunks
         results = HR_INDEX.search(query_embedding, k=top_k)

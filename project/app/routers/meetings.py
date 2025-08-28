@@ -28,14 +28,7 @@ async def summarize_text_meeting(
             meeting_content.strip(), 
             meeting_title
         )
-        
-        # Optionally store chunks for search
-        chunks_stored = 0
-        if store_for_search:
-            chunks_stored = await _store_meeting_chunks(meeting_content, meeting_title)
-        
-        # Add chunks_stored to response
-        result["chunks_stored"] = chunks_stored
+       
         return SummaryResponse(**result)
     
     except Exception as e:
@@ -53,7 +46,7 @@ async def summarize_pdf_meeting(
     if not pdf_file.filename or not pdf_file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Only PDF files are allowed")
     
-    # Extract title from filename if not provided
+    # Extract title from filename if notd
     if not meeting_title:
         meeting_title = pdf_file.filename.replace('.pdf', '').replace('_', ' ').title()
     
@@ -67,21 +60,8 @@ async def summarize_pdf_meeting(
         # Generate LLM-powered summary
         result = await summary_service.summarize_text(meeting_content, meeting_title)
         
-        # Optionally store chunks for search
-        chunks_stored = 0
-        if store_for_search:
-            chunks_stored = await _store_meeting_chunks(meeting_content, meeting_title)
-        
-        # Add additional info to response
-        result.update({
-            "chunks_stored": chunks_stored,
-            "filename": pdf_file.filename
-        })
-        
         return SummaryResponse(**result)
     
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"PDF processing error: {str(e)}")
 
@@ -98,7 +78,6 @@ async def _extract_pdf_text(file: UploadFile) -> str:
     except Exception as e:
         raise Exception(f"Failed to extract PDF text: {str(e)}")
 
-async def _store_meeting_chunks(content: str, title: str) -> int:
     """Store meeting chunks in vector database for future search"""
     try:
         chunks = chunk_text(content, settings.chunk_size, settings.chunk_overlap)

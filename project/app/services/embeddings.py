@@ -44,12 +44,3 @@ class Embeddings:
 embeddings = Embeddings()
 
 
-# Convenience functions
-def embed_texts(texts: List[str]) -> np.ndarray:
-    """Generate embeddings for multiple texts."""
-    return embeddings.embed(texts)
-
-
-def embed_text(text: str) -> np.ndarray:
-    """Generate embedding for a single text."""
-    return embeddings.embed_one(text)

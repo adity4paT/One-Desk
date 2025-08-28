@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from json import JSONDecodeError
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -64,37 +63,15 @@ class SimpleFaissIndex:
             "dim": self.dim,
         }, ensure_ascii=False))
 
-    def load(self) -> None:
-        """Load FAISS index and metadata (robust to missing/empty/corrupt meta files)"""
-
-        # Ensure directories exist
-        self.index_path.parent.mkdir(parents=True, exist_ok=True)
-        self.meta_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Robustly load metadata
-        try:
-            text = self.meta_path.read_text(encoding="utf-8").strip()
-            if not text:
-                data = {}
-            else:
-                data = json.loads(text)
-        except FileNotFoundError:
-            data = {}
-        except JSONDecodeError:
-            # backup corrupt file and continue with empty metadata
-            corrupt_backup = self.meta_path.with_suffix(self.meta_path.suffix + ".corrupt")
-            try:
-                self.meta_path.rename(corrupt_backup)
-            except Exception:
-                # if rename fails, ignore and continue
-                pass
-            data = {}
-
+    def load(self) -> bool:
+        if not self.index_path.exists() or not self.meta_path.exists():
+            return False
+        self.index = faiss.read_index(str(self.index_path))
+        data = json.loads(self.meta_path.read_text(encoding="utf-8"))
         self.texts = data.get("texts", [])
         self.metas = data.get("metas", [])
         self.dim = data.get("dim")
-        if self.dim is not None:
-            self.index = faiss.IndexFlatIP(self.dim)
+        return True
 
     def clear(self) -> None:
         self.index = None
@@ -112,7 +89,6 @@ class SimpleFaissIndex:
     @property
     def count(self) -> int:
         return len(self.texts)
-
 
 # Two simple indices: HR and Meetings
 HR_INDEX = SimpleFaissIndex(

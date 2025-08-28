@@ -25,37 +25,3 @@ async def ask_hr_question(
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
-
-# # Keep the old search endpoint for backward compatibility
-# @router.post("/search")
-# async def search_hr_policies(
-#     query: str = Form(...), 
-#     top_k: int = Form(5)
-# ):
-#     """Search HR policies (returns raw search results without LLM synthesis)"""
-    
-#     if not query.strip():
-#         raise HTTPException(status_code=400, detail="Query required")
-    
-#     try:
-#         from app.vectorstores.faiss_store import HR_INDEX
-#         from app.services.embeddings import embeddings
-        
-#         HR_INDEX.load()
-#         query_vector = embeddings.embed_one(query.strip())
-#         hits = HR_INDEX.search(query_vector, k=max(1, min(top_k, 20)))
-        
-#         results = [
-#             {
-#                 "text": h["text"],
-#                 "score": round(h["score"], 4),
-#                 "source": h["meta"].get("source"),
-#                 "chunk": h["meta"].get("chunk"),
-#             }
-#             for h in hits
-#         ]
-        
-#         return {"query": query.strip(), "results": results}
-    
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Search error: {str(e)}")

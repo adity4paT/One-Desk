@@ -1,7 +1,6 @@
 from typing import List, Dict, Any, Optional
 import time
 from app.services.llm import MODEL_NAME, get_llm_client
-from app.services.cache import cache_manager
 from app.vectorstores.faiss_store import HR_INDEX
 from app.services.embeddings import embeddings
 from app.config import settings
@@ -18,21 +17,7 @@ class RAGService:
         
         # Use default or provided top_k
         top_k = top_k or settings.top_k_retrieval
-
-        # Always define cache_key if response cache is enabled
-        cache_key = None
-        if settings.enable_response_cache:
-            cache_key = cache_manager.generate_key("hrqa", {
-                "query": query,
-                "top_k": top_k,
-                "model": MODEL_NAME
-            })
-
-            cached_response = cache_manager.get_response(cache_key)
-            if cached_response:
-                cached_response["cached"] = True
-                cached_response["latency_ms"] = int((time.time() - start_time) * 1000)
-                return cached_response
+    # Caching removed for simplicity; always compute fresh answer
         
         # Step 1: Retrieve relevant contexts
         contexts = await self._retrieve_contexts(query, top_k)
@@ -67,52 +52,28 @@ class RAGService:
             "cached": False,
             "latency_ms": int((time.time() - start_time) * 1000)
         }
-        # Cache the response (response cache)
-        if settings.enable_response_cache and cache_key is not None:
-            cache_manager.set_response(cache_key, response.copy())
-        
-        return response
         return response
     
     async def _retrieve_contexts(self, query: str, top_k: int) -> List[Dict[str, Any]]:
         """Retrieve and rank relevant document chunks"""
         # Ensure HR index is loaded
         HR_INDEX.load()
-        
-        # Get query embedding — use embedding cache if enabled
-        if settings.enable_embedding_cache:
-            emb_key = cache_manager.generate_key("embedding", {"text_hash": hash(query)})
-            try:
-                cached_emb = cache_manager.get_embedding(emb_key)
-            except Exception:
-                cached_emb = None
+        # Always compute fresh embedding (no embedding cache)
+        query_embedding = embeddings.embed_one(query)
 
-            if cached_emb is not None:
-                query_embedding = cached_emb
-            else:
-                query_embedding = embeddings.embed_one(query)
-                try:
-                    cache_manager.set_embedding(emb_key, query_embedding)
-                except Exception:
-                    pass
-        else:
-            query_embedding = embeddings.embed_one(query)
-        
         # Search for similar chunks
         results = HR_INDEX.search(query_embedding, k=top_k)
-        
+
         # Filter and prepare contexts
-        contexts = []
+        contexts: List[Dict[str, Any]] = []
         total_chars = 0
-        
+
         for result in results:
-            # Skip if context would be too long
             if total_chars + len(result["text"]) > settings.max_context_length:
                 break
-                
             contexts.append(result)
             total_chars += len(result["text"])
-        
+
         return contexts
     
     async def _synthesize_answer(self, query: str, contexts: List[Dict[str, Any]]) -> str:

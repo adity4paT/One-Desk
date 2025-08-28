@@ -1,7 +1,6 @@
 from typing import Dict, Any
 import time
 from app.services.llm import get_llm_client
-from app.services.cache import cache_manager
 from app.config import settings
 
 class SummaryService:
@@ -14,18 +13,7 @@ class SummaryService:
         """Summarize meeting text using LLM"""
         start_time = time.time()
         
-        # Always generate cache_key for consistent usage
-        cache_key = cache_manager.generate_key("summary", {
-            "text_hash": hash(text),
-            "title": meeting_title
-        })
-
-        # Check cache first (response cache)
-        if settings.enable_response_cache:
-            cached_response = cache_manager.get_response(cache_key)
-            if cached_response:
-                cached_response["cached"] = True
-                return cached_response
+    # Caching removed for simplicity; always compute fresh summary
         
         # Generate summary using LLM
         summary = await self._generate_summary(text, meeting_title)
@@ -37,10 +25,6 @@ class SummaryService:
             "cached": False,
             "latency_ms": int((time.time() - start_time) * 1000)
         }
-        
-        # Cache the response (response cache)
-        if settings.enable_response_cache:
-            cache_manager.set_response(cache_key, response.copy())
         
         return response
     

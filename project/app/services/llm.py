@@ -7,8 +7,6 @@ API_KEY = settings.gemini_api_key
 MODEL_NAME = settings.gemini_model
 BASE_URL = settings.gemini_base_url
 
-
-
 class LLM():
     """DeepSeek API client using OpenAI-compatible format"""
     
